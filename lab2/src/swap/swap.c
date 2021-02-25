@@ -2,5 +2,8 @@
 
 void Swap(char *left, char *right)
 {
-	// ваш код здесь
+	char* tmp = (char*)malloc(sizeof(char));
+    *tmp = *left;
+    *left = *right;
+    *right = *tmp;
 }
