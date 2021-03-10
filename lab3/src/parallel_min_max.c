@@ -42,16 +42,29 @@ int main(int argc, char **argv) {
             seed = atoi(optarg);
             // your code here
             // error handling
+            if(seed) <= 0)
+            {
+             printf("seed is a positive number\n");
+             return 1; 
+            }
             break;
           case 1:
             array_size = atoi(optarg);
             // your code here
             // error handling
+            if (array_size <= 0) {
+             printf("array_size is a positive number\n");
+             return 1;
+            }
             break;
           case 2:
             pnum = atoi(optarg);
             // your code here
             // error handling
+            if (pnum <= 0) {
+             printf("pnum is a positive number\n");
+             return 1;
+            }
             break;
           case 3:
             with_files = true;
@@ -90,21 +103,55 @@ int main(int argc, char **argv) {
 
   struct timeval start_time;
   gettimeofday(&start_time, NULL);
-
+  proc_len = array_size/pnum;
+  if (proc_len*pnum != array_size)
+    last_len = proc_len + (array_size-proc_len*pnum);
+  
   for (int i = 0; i < pnum; i++) {
     pid_t child_pid = fork();
     if (child_pid >= 0) {
       // successful fork
+      printf("Это процесс-родитель!\n");
+      
+      
       active_child_processes += 1;
       if (child_pid == 0) {
         // child process
-
+        printf("Это процесс-потомок!\n");
         // parallel somehow
-
+        struct MinMax min_max;
+        min_max.min = INT_MAX;
+        min_max.max = INT_MIN;
+        if(i == pnum-1;)
+        {
+            for(int index = (i-1)*proc_len;index <array_size; index++)
+              {
+                if(min_max.min > array[index]) min_max.min = array[index];
+                if(min_max.max < array[index]) min_max.max = array[index];
+              }
+        }
+        else
+        {
+            for(int index = (i-1)*proc_len;index <i*proc_len; index++)
+          {
+                if(min_max.min > array[index]) min_max.min = array[index];
+                if(min_max.max < array[index]) min_max.max = array[index];
+          }
+        }
+        
+        
         if (with_files) {
           // use files here
+          FILE *fin;
+          fin = fopen("C:\\Users\\user\\Desktop\\data.txt", "a");
+          fprintf(fin, "%d %d", min_max.min, min_max.max);
+          fclose(fin);
         } else {
           // use pipe here
+          int fd[2];
+          pipe(fd);
+          write(fd[1], min_max.min, 1);
+          write(fd[1], min_max.max, 1);
         }
         return 0;
       }
@@ -117,6 +164,7 @@ int main(int argc, char **argv) {
 
   while (active_child_processes > 0) {
     // your code here
+    wait()
 
     active_child_processes -= 1;
   }
@@ -131,8 +179,15 @@ int main(int argc, char **argv) {
 
     if (with_files) {
       // read from files
+      FILE *fin;
+      fin = fopen("C:\\Users\\user\\Desktop\\data.txt", "a");
+      fprintf(fin, "%d %d", min_max.min, min_max.max);
+      fscanf(fin, "%d %d", &min, &max);
+      fclose(fin);
     } else {
       // read from pipes
+      read(fin, max);
+      read(fin, min);
     }
 
     if (min < min_max.min) min_max.min = min;
