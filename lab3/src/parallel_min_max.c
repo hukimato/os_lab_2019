@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
             seed = atoi(optarg);
             // your code here
             // error handling
-            if(seed) <= 0)
+            if(seed <= 0)
             {
              printf("seed is a positive number\n");
              return 1; 
@@ -103,7 +103,11 @@ int main(int argc, char **argv) {
 
   struct timeval start_time;
   gettimeofday(&start_time, NULL);
-  proc_len = array_size/pnum;
+  int fd[2];
+  pipe(fd);
+
+  int proc_len = array_size/pnum;
+  int last_len;
   if (proc_len*pnum != array_size)
     last_len = proc_len + (array_size-proc_len*pnum);
   
@@ -122,36 +126,26 @@ int main(int argc, char **argv) {
         struct MinMax min_max;
         min_max.min = INT_MAX;
         min_max.max = INT_MIN;
-        if(i == pnum-1;)
+        if(i == pnum-1)
         {
-            for(int index = (i-1)*proc_len;index <array_size; index++)
-              {
-                if(min_max.min > array[index]) min_max.min = array[index];
-                if(min_max.max < array[index]) min_max.max = array[index];
-              }
+            min_max = GetMinMax(array, i*pnum, array_size);
         }
         else
         {
-            for(int index = (i-1)*proc_len;index <i*proc_len; index++)
-          {
-                if(min_max.min > array[index]) min_max.min = array[index];
-                if(min_max.max < array[index]) min_max.max = array[index];
-          }
+            min_max = GetMinMax(array, i*pnum, (i+1)*pnum);
         }
         
         
         if (with_files) {
           // use files here
           FILE *fin;
-          fin = fopen("C:\\Users\\user\\Desktop\\data.txt", "a");
-          fprintf(fin, "%d %d", min_max.min, min_max.max);
+          fin = fopen("data.txt", "a");
+          fprintf(fin, "%d %d\n", min_max.min, min_max.max);
           fclose(fin);
         } else {
           // use pipe here
-          int fd[2];
-          pipe(fd);
-          write(fd[1], min_max.min, 1);
-          write(fd[1], min_max.max, 1);
+          write(fd[1],&min_max.max,sizeof(int));
+          write(fd[1],&min_max.min,sizeof(int));
         }
         return 0;
       }
@@ -163,8 +157,9 @@ int main(int argc, char **argv) {
   }
 
   while (active_child_processes > 0) {
-    // your code here
-    wait()
+    close(fd[1]);
+    wait(0);
+
 
     active_child_processes -= 1;
   }
@@ -174,25 +169,28 @@ int main(int argc, char **argv) {
   min_max.max = INT_MIN;
 
   for (int i = 0; i < pnum; i++) {
+      struct MinMax NewMinMax;
     int min = INT_MAX;
     int max = INT_MIN;
 
     if (with_files) {
       // read from files
       FILE *fin;
-      fin = fopen("C:\\Users\\user\\Desktop\\data.txt", "a");
-      fprintf(fin, "%d %d", min_max.min, min_max.max);
+      fin = fopen("data.txt", "r");
       fscanf(fin, "%d %d", &min, &max);
       fclose(fin);
     } else {
       // read from pipes
-      read(fin, max);
-      read(fin, min);
+      read(fd[0], &max, sizeof(int));
+      read(fd[0], &min, sizeof(int));
     }
 
     if (min < min_max.min) min_max.min = min;
     if (max > min_max.max) min_max.max = max;
   }
+  FILE *fin;
+  fin = fopen("data.txt", "w");
+  fclose(fin);
 
   struct timeval finish_time;
   gettimeofday(&finish_time, NULL);

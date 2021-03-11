@@ -13,5 +13,11 @@ utils.o : utils.h
 find_min_max.o : utils.h find_min_max.h
 	$(CC) -o find_min_max.o -c find_min_max.c $(CFLAGS)
 
+task5 : 
+	$(CC) task5.c -o task5 $(CFLAGS)
+
+all : 
+	$(CC)  -c find_min_max.c parallel_min_max.c sequential_min_max.c utils.c$(CFLAGS)
+
 clean :
 	rm utils.o find_min_max.o sequential_min_max parallel_min_max
