@@ -20,6 +20,7 @@ int main(int argc, char **argv) {
   int array_size = -1;
   int pnum = -1;
   bool with_files = false;
+  int timeout = -1;
 
   while (true) {
     int current_optind = optind ? optind : 1;
@@ -27,6 +28,7 @@ int main(int argc, char **argv) {
     static struct option options[] = {{"seed", required_argument, 0, 0},
                                       {"array_size", required_argument, 0, 0},
                                       {"pnum", required_argument, 0, 0},
+                                      {"timeout", no_argument, 0, 0},
                                       {"by_files", no_argument, 0, 'f'},
                                       {0, 0, 0, 0}};
 
@@ -69,6 +71,12 @@ int main(int argc, char **argv) {
           case 3:
             with_files = true;
             break;
+          case 4:
+            timeout = atoi(optarg);
+            if (timeout <= 0){
+              printf("timeout is a positive number\n");
+              return 1;
+            }
 
           defalut:
             printf("Index %d is out of options\n", option_index);
@@ -116,7 +124,8 @@ int main(int argc, char **argv) {
     if (child_pid >= 0) {
       // successful fork
       printf("Это процесс-родитель!\n");
-      
+      alarm(timeout);
+      signal(SIGKILL);
       
       active_child_processes += 1;
       if (child_pid == 0) {
@@ -147,6 +156,7 @@ int main(int argc, char **argv) {
           write(fd[1],&min_max.max,sizeof(int));
           write(fd[1],&min_max.min,sizeof(int));
         }
+        
         return 0;
       }
 
