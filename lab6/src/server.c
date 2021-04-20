@@ -34,7 +34,10 @@ uint64_t MultModulo(uint64_t a, uint64_t b, uint64_t mod) {
 
 uint64_t Factorial(const struct FactorialArgs *args) {
   uint64_t ans = 1;
-
+  for (int i = args->begin; i <= args->end;i++)
+  {
+      ans = MultModulo(ans, i, args->mod);
+  }
   // TODO: your code here
 
   return ans;
@@ -68,10 +71,18 @@ int main(int argc, char **argv) {
       case 0:
         port = atoi(optarg);
         // TODO: your code here
+        if(port <= 0)
+        {
+            exit(1);
+        }
         break;
       case 1:
         tnum = atoi(optarg);
         // TODO: your code here
+        if(tnum <= 0)
+        {
+            exit(1);
+        }
         break;
       default:
         printf("Index %d is out of options\n", option_index);
@@ -157,10 +168,19 @@ int main(int argc, char **argv) {
       fprintf(stdout, "Receive: %llu %llu %llu\n", begin, end, mod);
 
       struct FactorialArgs args[tnum];
+      int tmp = (end-begin)/tnum;
       for (uint32_t i = 0; i < tnum; i++) {
         // TODO: parallel somehow
-        args[i].begin = 1;
-        args[i].end = 1;
+        if(i == tnum - 1)
+        {
+            args[i].begin = i*tmp+1;
+            args[i].end = end; 
+        }
+        else {
+            args[i].begin = i*tmp+1;
+            args[i].end = (i+1)*tmp+1;
+        }
+        
         args[i].mod = mod;
 
         if (pthread_create(&threads[i], NULL, ThreadFactorial,
