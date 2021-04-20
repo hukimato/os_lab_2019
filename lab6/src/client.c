@@ -11,6 +11,7 @@
 #include <netinet/ip.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <string.h>
 
 struct Server {
   char ip[255];
@@ -70,14 +71,29 @@ int main(int argc, char **argv) {
       case 0:
         ConvertStringToUI64(optarg, &k);
         // TODO: your code here
+        if (k <= 0)
+        {
+            printf("Argument k heve to be positive.\n");
+            return 0;
+        }
         break;
       case 1:
         ConvertStringToUI64(optarg, &mod);
         // TODO: your code here
+        if (mod <= 0)
+        {
+            printf("Argument mod heve to be positive.\n");
+            return 0;
+        }
         break;
       case 2:
         // TODO: your code here
         memcpy(servers, optarg, strlen(optarg));
+        if (strlen(optarg) <= 0)
+        {
+            printf("Argument servers can not be empty.\n");
+            return 0;
+        }
         break;
       default:
         printf("Index %d is out of options\n", option_index);
@@ -99,26 +115,122 @@ int main(int argc, char **argv) {
   }
 
   // TODO: for one server here, rewrite with servers from file
+  FILE* file;
+  file = fopen(servers, "r");
+  size_t counter = 0; 
+  char s[20];
+  char sepr[1] = {':'};
+  char* istr;
   unsigned int servers_num = 1;
-  struct Server *to = malloc(sizeof(struct Server) * servers_num);
+  struct Server *to = malloc(sizeof(struct Server) * 20);
+  while(1)
+  {
+    int* tmp = fgets (s,20,file);
+    if(tmp == NULL)
+    {
+        break;
+    }
+    servers_num++;
+    istr = strtok (s,sepr);
+    memcpy(to[servers_num].ip, istr, sizeof(istr));
+    istr = strtok (NULL,sepr);
+    to[servers_num].port = atoi(istr);
+  }
+
+  
+
+  
   // TODO: delete this and parallel work between servers
-  to[0].port = 20001;
-  memcpy(to[0].ip, "127.0.0.1", sizeof("127.0.0.1"));
+  //to[0].port = 20001;
+  //memcpy(to[0].ip, "127.0.0.1", sizeof("127.0.0.1"));
 
   // TODO: work continiously, rewrite to make parallel
-  for (int i = 0; i < servers_num; i++) {
+  int npp = k/servers_num;
+    uint64_t begin;
+    uint64_t end;
+    uint64_t fanswer = 1;
+    for (int i = 0; i < servers_num; i++) {
+        if(i == servers_num-1)
+        {
+            begin = i*npp+1;
+            end = k;
+        }
+        else {
+            begin = i*npp+1;
+            end = (i+1)*npp;
+        }
+        pid_t child_pid = fork();
+        if (child_pid == 0) {
+            struct hostent *hostname = gethostbyname(to[i].ip);
+            if (hostname == NULL) 
+            {
+                fprintf(stderr, "gethostbyname failed with %s\n", to[i].ip);
+                exit(1);
+            }
+
+            struct sockaddr_in server;
+            server.sin_family = AF_INET;
+            server.sin_port = htons(to[i].port);
+            server.sin_addr.s_addr = *((unsigned long *)hostname->h_addr);
+            
+            int sck = socket(AF_INET, SOCK_STREAM, 0);
+            if (sck < 0) 
+            {
+                fprintf(stderr, "Socket creation failed!\n");
+                exit(1);
+            }
+
+            if (connect(sck, (struct sockaddr *)&server, sizeof(server)) < 0) 
+            {
+            fprintf(stderr, "Connection failed\n");
+            exit(1);
+            }
+            
+
+            char task[sizeof(uint64_t) * 3];
+            memcpy(task, &begin, sizeof(uint64_t));
+            memcpy(task + sizeof(uint64_t), &end, sizeof(uint64_t));
+            memcpy(task + 2 * sizeof(uint64_t), &mod, sizeof(uint64_t));
+
+            if (send(sck, task, sizeof(task), 0) < 0) 
+            {
+            fprintf(stderr, "Send failed\n");
+            exit(1);
+            }
+
+            char response[sizeof(uint64_t)];
+            if (recv(sck, response, sizeof(response), 0) < 0) 
+            {
+            fprintf(stderr, "Recieve failed\n");
+             exit(1);
+            }  
+
+            // TODO: from one server
+            // unite results
+            uint64_t answer = 0;
+            memcpy(&answer, response, sizeof(uint64_t));
+            fanswer *= answer;
+
+            close(sck);
+            }
+                else 
+            {
+                wait();
+            }
+        
+            }
+            
+    
+  /*for (int i = 0; i < servers_num; i++) {
     struct hostent *hostname = gethostbyname(to[i].ip);
     if (hostname == NULL) {
       fprintf(stderr, "gethostbyname failed with %s\n", to[i].ip);
       exit(1);
-    }
+    }*/
 
-    struct sockaddr_in server;
-    server.sin_family = AF_INET;
-    server.sin_port = htons(to[i].port);
-    server.sin_addr.s_addr = *((unsigned long *)hostname->h_addr);
+    
 
-    int sck = socket(AF_INET, SOCK_STREAM, 0);
+    /*int sck = socket(AF_INET, SOCK_STREAM, 0);
     if (sck < 0) {
       fprintf(stderr, "Socket creation failed!\n");
       exit(1);
@@ -157,7 +269,7 @@ int main(int argc, char **argv) {
     printf("answer: %llu\n", answer);
 
     close(sck);
-  }
+  }*/
   free(to);
 
   return 0;
