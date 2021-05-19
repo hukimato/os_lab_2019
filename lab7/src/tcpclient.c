@@ -1,25 +1,24 @@
 #include <netinet/in.h>
-	#include <stdio.h>
-	#include <stdlib.h>
-	#include <string.h>
-	#include <sys/socket.h>
-	#include <sys/types.h>
-	#include <unistd.h>
-	#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdbool.h>
 	
-	#include <getopt.h>
+#include <getopt.h>
 	
-	#define SADDR struct sockaddr
-	#define SIZE sizeof(struct sockaddr_in)
+#define SADDR struct sockaddr
+#define SIZE sizeof(struct sockaddr_in)
 	
-	int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
+	int BUFSIZE = -1;
 	
-	  int BUFSIZE = -1;
-	
-	  int SERV_PORT = -1;
-	  char* ADDR;
-	  while (true) {
-	    int current_optind = optind ? optind : 1;
+	int SERV_PORT = -1;
+	char* ADDR;
+	while (true) {
+		int current_optind = optind ? optind : 1;
 	
 	    static struct option options[] = {{"BUFSIZE", required_argument, 0, 0},
 	                                      {"SERV_PORT", required_argument, 0, 0},
